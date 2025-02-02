@@ -5,86 +5,100 @@ export default class Carousel {
     this.slides = slides;
     this.elem = this.renderCarousel();
     this.translateX = 0;
+    this.carousel = this.elem.querySelector('.carousel__inner');
+    this.buttonRight = this.elem.querySelector('.carousel__arrow_right');
+    this.buttonLeft = this.elem.querySelector('.carousel__arrow_left');
+    this.setDisplayButton(this.buttonLeft, this.translateX === 0);
+    this.onRightArrow();
+    this.onLeftArrow();
+    this.onButtonCarousel();
   }
 
-  translateCarousel(carousel) {
-    carousel.style.transform = `translateX(${this.translateX}px)`;
+  setDisplayButton(button, isHidden) {
+    button.style.display = isHidden ? 'none' : '';
   }
 
-  onRightArrow(carousel) {
-    // const carousel = document.querySelector('.carousel__inner');
-    console.error('carousel', carousel);
-    const widthSlide = carousel.firstElementChild.offsetWidth;
-    this.translateX -= widthSlide;
-    this.translateCarousel(carousel);
-    // setDisplayButton(buttonRight, this.translateX === -widthSlide * (countSlides - 1));
-    // setDisplayButton(buttonLeft, this.translateX === 0);
+  getWidthSlide() {
+    return this.carousel.firstElementChild.offsetWidth;
   }
 
-  onLeftArrow(carousel) {
-    // const carousel = document.querySelector('.carousel__inner');
-    const widthSlide = carousel.firstElementChild.offsetWidth;
-    this.translateX += widthSlide;
-    this.translateCarousel(carousel);
-    // setDisplayButton(buttonRight, this.translateX === -widthSlide * (countSlides - 1));
-    // setDisplayButton(buttonLeft, this.translateX === 0);
+  translateCarousel() {
+    this.carousel.style.transform = `translateX(${this.translateX}px)`;
+    this.setDisplayButton(this.buttonRight, this.translateX === -this.getWidthSlide() * (this.slides.length - 1));
+    this.setDisplayButton(this.buttonLeft, this.translateX === 0);
+  }
+
+  moveRightCarousel() {
+    this.translateX -= this.getWidthSlide();
+    this.translateCarousel();
+  }
+
+  moveLeftCarousel() {
+    this.translateX += this.getWidthSlide();
+    this.translateCarousel();
+  }
+
+  onRightArrow() {
+    this.buttonRight.addEventListener('click', this.moveRightCarousel.bind(this));
+
+  }
+
+  onLeftArrow() {
+    this.buttonLeft.addEventListener('click', this.moveLeftCarousel.bind(this));
+  }
+
+  createCustomEvent(e) {
+    const slide = e.currentTarget.closest('.carousel__slide');
+    const event = new CustomEvent("product-add", {
+      detail: slide.dataset.id,
+      bubbles: true
+    });
+    this.elem.dispatchEvent(event);
+  }
+
+  onButtonCarousel() {
+    const buttons = this.elem.querySelectorAll('.carousel__button');
+    buttons.forEach((button) => button.addEventListener('click', this.createCustomEvent.bind(this)));
   }
 
   renderInnerSlides(carouselInner) {
     return this.slides.map((slide) => carouselInner.append(this.renderSlide(slide)));
   }
 
-  renderRightArrow(carousel) {
-    const arrowRight = document.createElement('div');
-    arrowRight.classList.add('carousel__arrow', 'carousel__arrow_right');
-    const imgRight = createElement(`<img src="/assets/images/icons/angle-icon.svg" alt="icon">`);
-    arrowRight.append(imgRight);
-    arrowRight.onclick = this.onRightArrow;
-    return arrowRight;
+  renderArrowRight() {
+    return createElement(`
+        <div class="carousel__arrow carousel__arrow_right">
+          <img src="/assets/images/icons/angle-icon.svg" alt="icon">
+        </div>
+    `);
   }
 
-  renderLeftArrow(carousel) {
-    const arrowLeft = document.createElement('div');
-    arrowLeft.classList.add('carousel__arrow', 'carousel__arrow_left');
-    const imgLeft = createElement(`<img src="/assets/images/icons/angle-left-icon.svg" alt="icon">`);
-    arrowLeft.append(imgLeft);
-    arrowLeft.onclick = this.onLeftArrow;
-    return arrowLeft;
-  }
-
-  renderArrows() {
-    // return createElement(`
-    //     <div class="carousel__arrow carousel__arrow_right">
-    //       <img src="/assets/images/icons/angle-icon.svg" alt="icon">
-    //     </div>
-    //     <div class="carousel__arrow carousel__arrow_left">
-    //       <img src="/assets/images/icons/angle-left-icon.svg" alt="icon">
-    //     </div>
-    // `);
+  renderArrowLeft() {
+    return createElement(`
+        <div class="carousel__arrow carousel__arrow_left">
+          <img src="/assets/images/icons/angle-left-icon.svg" alt="icon">
+        </div>
+    `);
   }
 
   renderCarousel() {
-    // return createElement(`
-    //   <div class="carousel">
-    //   </div>
-    // `);
-
     const carousel = document.createElement("div");
     carousel.classList.add('carousel');
     const carouselInner = document.createElement("div");
     carouselInner.classList.add('carousel__inner');
     this.renderInnerSlides(carouselInner);
-    carousel.append(carouselInner, this.renderRightArrow(carousel), this.renderLeftArrow(carousel));
+    carousel.append(this.renderArrowRight(), this.renderArrowLeft(), carouselInner);
     return carousel;
   }
 
   renderSlide(slide) {
+    const {id, image, price, name} = slide;
     return createElement(`
-     <div class="carousel__slide" data-id="penang-shrimp">
-      <img src="/assets/images/carousel/${slide.image}" class="carousel__img" alt="slide">
+     <div class="carousel__slide" data-id="${id}">
+      <img src="/assets/images/carousel/${image}" class="carousel__img" alt="slide">
       <div class="carousel__caption">
-        <span class="carousel__price">€${slide.price}</span>
-        <div class="carousel__title">${slide.name}</div>
+        <span class="carousel__price">€${price}</span>
+        <div class="carousel__title">${name}</div>
         <button type="button" class="carousel__button">
           <img src="/assets/images/icons/plus-icon.svg" alt="icon">
         </button>
